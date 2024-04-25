@@ -13,6 +13,11 @@ If you want to play around with the generators either check out the Nimble and F
 
 Contributions to the `libmem` Nim bindings are welcome. Whether it's improving the wrapper, adding more tests, or enhancing documentation, your input is valuable. Please submit pull requests or open issues on the project's repository to contribute.
 
+## Todo
+Memory read and write implementation, that fits both Nim and Python needs to get integrated.
+Python toplevel wrapper needs to be implemented.
+
+
 ## License
 
 The `libmem` Nim bindings are licensed under the MIT License. You are free to use, modify, and distribute the bindings as you see fit. For more information, please refer to the `LICENSE`.txt file in the project's repository.

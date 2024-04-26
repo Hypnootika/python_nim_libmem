@@ -1,4 +1,4 @@
-# libmem Nim Bindings
+# Libmem bindings for Nim and Python
 
 This README provides information on how to integrate and use the Nim bindings for the `libmem` C library in your Nim or Python projects. These bindings allow Nim or Python applications to leverage the functionality of `libmem`, a C library, with ease. The bindings were primarily generated using Futhark and subsequently refined for better integration and usage in Nim.
 

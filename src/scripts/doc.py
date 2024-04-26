@@ -1,7 +1,7 @@
 import re
 import os
 from pathlib import Path
-nim_file_path = Path(__file__).resolve().parent.parent.joinpath("libmem.nim")
+nim_file_path = Path(__file__).resolve().parent.parent.joinpath("pynimlibmem.nim")
 doc_folder_path = Path(__file__).resolve().parent.parent.joinpath("docs")
 
 
@@ -33,6 +33,7 @@ def insert_documentation(nim_path, doc_path, _proc_name):
         file.writelines(content)
 
 
-def main():
-    for proc_name in extract_proc_names(nim_file_path):
-        insert_documentation(nim_file_path, doc_folder_path, proc_name)
+#
+# def main():
+#     for proc_name in extract_proc_names(nim_file_path):
+#         insert_documentation(nim_file_path, doc_folder_path, proc_name)

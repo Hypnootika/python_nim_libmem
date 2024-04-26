@@ -2,7 +2,7 @@ import re
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-gen_file = os.path.join(current_dir, "nimlibmem.nim")
+gen_file = os.path.join(current_dir, "pynimlibmem.nim")
 
 removethis = """when 0 is static:
   const

@@ -315,4 +315,5 @@ proc main() =
   sleep(1000)
   echo "All tests passed"
 
-main()
+when isMainModule:
+  main()

@@ -88,7 +88,7 @@ def preparewrappers(file):
 def main():
     current_dir = Path(__file__).resolve().parent
     gen_file = current_dir.parent.joinpath("nimlibmemunformatted.nim")
-    output_file = current_dir.parent.joinpath("nimlibmem.nim")
+    output_file = current_dir.parent.joinpath("pynimlibmem.nim")
     resup(gen_file, output_file)
     preparewrappers(output_file)
 

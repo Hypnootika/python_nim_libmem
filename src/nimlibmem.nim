@@ -1,6 +1,6 @@
 import typetraits, strutils, os, nimpy, sequtils
 
-pyExportModule("libmem")
+pyExportModule("pynimlibmem")
 
 const
   Protnone* = uint32(0)
@@ -85,7 +85,7 @@ proc cb*[T](c: ptr T; arg: pointer): boolt {.cdecl.} =
   result = 1
 
 proc originalEnumprocesses(callback: proc (a0: ptr Processt; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumProcesses".}
-proc Enumprocesses*(): seq[Processt]  = 
+proc enumProcesses*(): seq[Processt] {.exportpy: "enum_processes".}  =
   ## # Description
   ## Enumerates processes running on the system.
   ##
@@ -98,7 +98,7 @@ proc Enumprocesses*(): seq[Processt]  =
 
 
 proc originalGetprocess(processout: ptr Processt): boolt {.cdecl, importc: "LM_GetProcess".}
-proc Getprocess*(): Processt {.exportpy.}  = 
+proc getProcess*(): Processt {.exportpy: "get_process".}  =
   ## # Description
   ## Retrieves information about the current process, including its PID,
   ## parent PID, path, name, start time, and architecture bits.
@@ -112,7 +112,7 @@ proc Getprocess*(): Processt {.exportpy.}  =
 
 
 proc originalGetprocessex(pid: uint32; processout: ptr Processt): boolt {.cdecl, importc: "LM_GetProcessEx".}
-proc Getprocessex*(pid: uint32): Processt {.exportpy.}  = 
+proc getProcessex*(pid: uint32): Processt {.exportpy: "get_processex".}  =
   ## # Description
   ## Retrieves information about a specified process identified by its process ID.
   ##
@@ -126,7 +126,7 @@ proc Getprocessex*(pid: uint32): Processt {.exportpy.}  =
 
 
 proc originalFindprocess(processname: cstring; processout: ptr Processt): boolt {.cdecl, importc: "LM_FindProcess".}
-proc Findprocess*(processname: string): Processt {.exportpy.}  =
+proc findProcess*(processname: string): Processt {.exportpy: "find_process".}  =
   ## # Description
   ## Searches for a process by name and returns it as a `Processt` structure.
   ##
@@ -141,7 +141,7 @@ proc Findprocess*(processname: string): Processt {.exportpy.}  =
 
 
 proc originalIsprocessalive(process: ptr Processt): boolt {.cdecl, importc: "LM_IsProcessAlive".}
-proc Isprocessalive*(process: Processt): bool {.exportpy.}  = 
+proc isProcessalive*(process: Processt): bool {.exportpy: "is_process_alive".}  =
   ## # Description
   ## Checks if a process is alive.
   ##
@@ -154,8 +154,8 @@ proc Isprocessalive*(process: Processt): bool {.exportpy.}  =
   return originalIsprocessalive(process.addr).bool
 
 
-proc originalGetbits(): csize_t {.cdecl, importc: "LM_GetBits".}
-proc Getbits*(): csize_t {.exportpy.}  = 
+proc originalgetBits(): csize_t {.cdecl, importc: "LM_GetBits".}
+proc getBits*(): csize_t {.exportpy: "get_bits".}  =
   ## # Description
   ## Returns the size of a pointer in bits, which corresponds to the current
   ## process's bits (32 bits or 64 bits).
@@ -165,11 +165,11 @@ proc Getbits*(): csize_t {.exportpy.}  =
   ##
   ## # Return Value
   ## The size of a pointer in bits.
-  return originalGetbits()
+  return originalgetBits()
 
 
 proc originalGetsystembits(): csize_t {.cdecl, importc: "LM_GetSystemBits".}
-proc Getsystembits*(): csize_t {.exportpy.}  = 
+proc getSystembits*(): csize_t {.exportpy: "get_system_bits".}  =
   ## # Description
   ## Returns the system architecture bits (32 bits or 64 bits).
   ##
@@ -182,7 +182,7 @@ proc Getsystembits*(): csize_t {.exportpy.}  =
 
 
 proc originalEnumthreads(callback: proc (a0: ptr Threadt; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumThreads".}
-proc Enumthreads*(): seq[Threadt] {.exportpy.}  = 
+proc enumThreads*(): seq[Threadt] {.exportpy: "enum_threads".}  =
   ## # Description
   ## Enumerates threads in the current process.
   ##
@@ -195,7 +195,7 @@ proc Enumthreads*(): seq[Threadt] {.exportpy.}  =
 
 
 proc originalEnumthreadsex(process: ptr Processt; callback: proc (a0: ptr Threadt; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumThreadsEx".}
-proc Enumthreadsex*(process: Processt): seq[Threadt] {.exportpy.}  =
+proc enumThreadsex*(process: Processt): seq[Threadt] {.exportpy: "enum_threadsex".}  =
   ## # Description
   ## Enumerates threads of a given process.
   ##
@@ -208,7 +208,7 @@ proc Enumthreadsex*(process: Processt): seq[Threadt] {.exportpy.}  =
 
 
 proc originalGetthread(threadout: ptr Threadt): boolt {.cdecl, importc: "LM_GetThread".}
-proc Getthread*(): Threadt {.exportpy.}  = 
+proc getThread*(): Threadt {.exportpy: "get_thread".}  =
   ## # Description
   ## Retrieves information about the thread it's running from.
   ##
@@ -221,7 +221,7 @@ proc Getthread*(): Threadt {.exportpy.}  =
 
 
 proc originalGetthreadex(process: ptr Processt; threadout: ptr Threadt): boolt {.cdecl, importc: "LM_GetThreadEx".}
-proc Getthreadex*(process: Processt): Threadt {.exportpy.}  = 
+proc getThreadex*(process: Processt): Threadt {.exportpy: "get_threadex".}  =
   ## # Description
   ## Retrieves information about a thread in a process.
   ##
@@ -234,7 +234,7 @@ proc Getthreadex*(process: Processt): Threadt {.exportpy.}  =
 
 
 proc originalGetthreadprocess(thread: ptr Threadt; processout: ptr Processt): boolt {. cdecl, importc: "LM_GetThreadProcess".}
-proc Getthreadprocess*(thread: Threadt): Processt {.exportpy.}  = 
+proc getThreadprocess*(thread: Threadt): Processt {.exportpy: "get_thread_process".}  =
   ## # Description
   ## Retrieves the process that owns a given thread.
   ##
@@ -251,7 +251,7 @@ proc Getthreadprocess*(thread: Threadt): Processt {.exportpy.}  =
 
 
 proc originalEnummodules(callback: proc (a0: ptr Modulet; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumModules".}
-proc Enummodules*(): seq[Modulet] {.exportpy.}  = 
+proc enumModules*(): seq[Modulet] {.exportpy: "enum_modules".}  =
   ## # Description
   ## Enumerates modules in the current process and calls a callback function
   ## for each module found.
@@ -265,7 +265,7 @@ proc Enummodules*(): seq[Modulet] {.exportpy.}  =
 
 
 proc originalEnummodulesex(process: ptr Processt; callback: proc (a0: ptr Modulet; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumModulesEx".}
-proc Enummodulesex*(process: Processt): seq[Modulet] {.exportpy.}  = 
+proc enumModulesex*(process: Processt): seq[Modulet] {.exportpy: "enum_modulesex".}  =
   ## # Description
   ## Enumerates modules in a specified process and calls a callback function
   ## for each module found.
@@ -279,7 +279,7 @@ proc Enummodulesex*(process: Processt): seq[Modulet] {.exportpy.}  =
 
 
 proc originalFindmodule(name: cstring; moduleout: ptr Modulet): boolt {.cdecl, importc: "LM_FindModule".}
-proc Findmodule*(name: string): Modulet {.exportpy.}  = 
+proc findModule*(name: string): Modulet {.exportpy: "find_module".}  =
   ## # Description
   ## Finds a module by its name returns it as a `Modulet` structure.
   ##
@@ -293,7 +293,7 @@ proc Findmodule*(name: string): Modulet {.exportpy.}  =
 
 
 proc originalFindmoduleex(process: ptr Processt; name: cstring; moduleout: ptr Modulet): boolt {. cdecl, importc: "LM_FindModuleEx".}
-proc Findmoduleex*(process: Processt; name: string): Modulet {.exportpy.}  = 
+proc findModuleex*(process: Processt; name: string): Modulet {.exportpy: "find_moduleex".}  =
   ## # Description
   ## Finds a module by its name returns it as a `Modulet` structure.
   ##
@@ -309,7 +309,7 @@ proc Findmoduleex*(process: Processt; name: string): Modulet {.exportpy.}  =
 template currentmodulebase*(): uintptrt = Findmodule($charArrayToCstring(Getprocess().name)).base
 
 proc originalLoadmodule(path: cstring; moduleout: ptr Modulet): boolt {.cdecl, importc: "LM_LoadModule".}
-proc Loadmodule*(path: string): bool {.exportpy.}  =
+proc loadModule*(path: string): bool {.exportpy: "load_module".}  =
   ## # Description
   ## Loads a module from a specified path into the current process.
   ##
@@ -321,7 +321,7 @@ proc Loadmodule*(path: string): bool {.exportpy.}  =
   return originalLoadmodule(path, nil).bool
 
 proc originalLoadmoduleex(process: ptr Processt; path: cstring; moduleout: ptr Modulet): boolt {. cdecl, importc: "LM_LoadModuleEx".}
-proc Loadmoduleex*(process: Processt; path: string): bool {.exportpy.}  =
+proc loadModuleex*(process: Processt; path: string): bool {.exportpy: "load_moduleex".}  =
   ## # Description
   ## Loads a module from a specified path into a specified process.
   ##
@@ -335,7 +335,7 @@ proc Loadmoduleex*(process: Processt; path: string): bool {.exportpy.}  =
 
 
 proc originalUnloadmodule(module: ptr Modulet): boolt {.cdecl, importc: "LM_UnloadModule".}
-proc Unloadmodule*(module: Modulet): bool {.exportpy.}  = 
+proc unloadModule*(module: Modulet): bool {.exportpy: "unload_module".}  =
   ## # Description
   ## Unloads a module from the current process.
   ##
@@ -348,7 +348,7 @@ proc Unloadmodule*(module: Modulet): bool {.exportpy.}  =
 
 
 proc originalUnloadmoduleex(process: ptr Processt; module: ptr Modulet): boolt {.cdecl, importc: "LM_UnloadModuleEx".}
-proc Unloadmoduleex*(process: Processt; module: Modulet): bool {.exportpy.}  = 
+proc unloadModuleex*(process: Processt; module: Modulet): bool {.exportpy: "unload_moduleex".}  =
   ## # Description
   ## Unloads a module from a specified process.
   ##
@@ -362,7 +362,7 @@ proc Unloadmoduleex*(process: Processt; module: Modulet): bool {.exportpy.}  =
 
 
 proc originalEnumsymbols(module: ptr Modulet; callback: proc (a0: ptr Symbolt; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumSymbols".}
-proc Enumsymbols*(module: Modulet): seq[Symbolt] {.exportpy.}  = 
+proc enumSymbols*(module: Modulet): seq[Symbolt] {.exportpy: "enum_symbols".}  =
   ## # Description
   ## Enumerates symbols in a module and calls a callback function for each symbol found.
   ##
@@ -375,7 +375,7 @@ proc Enumsymbols*(module: Modulet): seq[Symbolt] {.exportpy.}  =
 
 
 proc originalEnumsegments(callback: proc (a0: ptr Segmentt; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumSegments".}
-proc Enumsegments*(): seq[Segmentt] {.exportpy.}  = 
+proc enumSegments*(): seq[Segmentt] {.exportpy: "enum_segments".}  =
   ## # Description
   ## Enumerates the memory segments of the current process and invokes a callback function for each segment.
   ##
@@ -388,7 +388,7 @@ proc Enumsegments*(): seq[Segmentt] {.exportpy.}  =
 
 
 proc originalEnumsegmentsex(process: ptr Processt; callback: proc (a0: ptr Segmentt; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumSegmentsEx".}
-proc Enumsegmentsex*(process: Processt): seq[Segmentt] {.exportpy.}  = 
+proc enumSegmentsex*(process: Processt): seq[Segmentt] {.exportpy: "enum_segmentsex".}  =
   ## # Description
   ## Enumerates the memory segments of a given process and invokes a callback function for each segment.
   ##
@@ -401,7 +401,7 @@ proc Enumsegmentsex*(process: Processt): seq[Segmentt] {.exportpy.}  =
 
 
 proc originalFindsegment(address: uintptrt; segmentout: ptr Segmentt): boolt {.cdecl, importc: "LM_FindSegment".}
-proc Findsegment*(address: uintptrt): Segmentt {.exportpy.}  = 
+proc findSegment*(address: uintptrt): Segmentt {.exportpy: "find_segment".}  =
   ## # Description
   ## The function `FindSegment` searches for a memory segment that a given address is within
   ##
@@ -414,7 +414,7 @@ proc Findsegment*(address: uintptrt): Segmentt {.exportpy.}  =
 
 
 proc originalFindsegmentex(process: ptr Processt; address: uintptrt; segmentout: ptr Segmentt): boolt {.cdecl, importc: "LM_FindSegmentEx".}
-proc Findsegmentex*(process: Processt; address: uintptrt): Segmentt {.exportpy.}  = 
+proc findSegmentex*(process: Processt; address: uintptrt): Segmentt {.exportpy: "find_segmentex".}  =
   ## # Description
   ## The function `FindSegment` searches for a memory segment that a given address is within.
   ##
@@ -427,7 +427,7 @@ proc Findsegmentex*(process: Processt; address: uintptrt): Segmentt {.exportpy.}
   discard originalFindsegmentex(process.addr, address, result.addr)
 
 proc originalSetmemory(dest: uintptrt; byte: uint8; size: csize_t): csize_t {.cdecl, importc: "LM_SetMemory".}
-proc Setmemory*(dest: uintptrt; byte: uint8; size: csize_t): csize_t {.exportpy.}  = 
+proc setMemory*(dest: uintptrt; byte: uint8; size: csize_t): csize_t {.exportpy: "set_memory".}  =
   ## # Description
   ## Sets a specified memory region to a given byte value.
   ##
@@ -444,7 +444,7 @@ proc Setmemory*(dest: uintptrt; byte: uint8; size: csize_t): csize_t {.exportpy.
 
 
 proc originalSetmemoryex(process: ptr Processt; dest: uintptrt; byte: uint8; size: csize_t): csize_t {.cdecl, importc: "LM_SetMemoryEx".}
-proc Setmemoryex*(process: Processt; dest: uintptrt; byte: uint8; size: csize_t): csize_t {.exportpy.}  = 
+proc setMemoryex*(process: Processt; dest: uintptrt; byte: uint8; size: csize_t): csize_t {.exportpy: "set_memoryex".}  =
   ## # Description
   ## Sets a specified memory region to a given byte value in a target
   ## process.
@@ -462,8 +462,8 @@ proc Setmemoryex*(process: Processt; dest: uintptrt; byte: uint8; size: csize_t)
   return originalSetmemoryex(process.addr, dest, byte, size)
 
 
-proc originalProtmemory(address: uintptrt; size: csize_t; prot: uint32; oldprotout: ptr uint32): boolt {.cdecl, importc: "LM_ProtMemory".}
-proc Protmemory*(address: uintptrt; size: csize_t; prot: uint32): bool {.exportpy.}  = 
+proc originalprotmemory(address: uintptrt; size: csize_t; prot: uint32; oldprotout: ptr uint32): boolt {.cdecl, importc: "LM_ProtMemory".}
+proc protMemory*(address: uintptrt; size: csize_t; prot: uint32): bool {.exportpy: "prot_memory".}  =
   ## # Description
   ## The function sets memory protection flags for a specified memory address range.
   ##
@@ -474,11 +474,11 @@ proc Protmemory*(address: uintptrt; size: csize_t; prot: uint32): bool {.exportp
   ##
   ## # Return Value
   ## The function returns a boolean value, either `TRUE` or `FALSE`, based on the success of the memory protection operation.
-  return originalProtmemory(address, size, prot, nil).bool
+  return originalprotmemory(address, size, prot, nil).bool
 
 
-proc originalProtmemoryex(process: ptr Processt; address: uintptrt; size: csize_t; prot: uint32; oldprotout: ptr uint32): boolt {.cdecl, importc: "LM_ProtMemoryEx".}
-proc Protmemoryex*(process: Processt; address: uintptrt; size: csize_t; prot: uint32): bool {.exportpy.}  =
+proc originalprotmemoryex(process: ptr Processt; address: uintptrt; size: csize_t; prot: uint32; oldprotout: ptr uint32): boolt {.cdecl, importc: "LM_ProtMemoryEx".}
+proc protMemoryex*(process: Processt; address: uintptrt; size: csize_t; prot: uint32): bool {.exportpy: "prot_memoryex".}  =
   ## # Description
   ## The function modifies memory protection flags for a specified address range in a given process.
   ##
@@ -492,7 +492,7 @@ proc Protmemoryex*(process: Processt; address: uintptrt; size: csize_t; prot: ui
   ## The function returns a boolean value indicating whether the memory
   ## protection operation was successful or not. It returns `TRUE` if the
   ## operation was successful and `FALSE` if it was not.
-  return originalProtmemoryex(process.addr, address, size, prot, nil).bool
+  return originalprotmemoryex(process.addr, address, size, prot, nil).bool
 
 
 proc originalReadmemory(source: uintptrt; dest: ptr uint8; size: csize_t): csize_t {. cdecl, importc: "LM_ReadMemory".}
@@ -517,7 +517,7 @@ proc read_uint8*(address: uintptrt): uint8 {.exportpy.}  =
   ##
   ## # Return Value
   ## The unsigned 8-bit integer value read from the specified memory address.
-  return readmemory(address, uint8)
+  result = cast[uint8](readmemory(address, uint8))
 
 proc read_uint16*(address: uintptrt): uint16 {.exportpy.}  =
   ## # Description
@@ -528,7 +528,7 @@ proc read_uint16*(address: uintptrt): uint16 {.exportpy.}  =
   ##
   ## # Return Value
   ## The unsigned 16-bit integer value read from the specified memory address.
-  return readmemory(address, uint16)
+  result = cast[uint16](readmemory(address, uint16))
 
 proc read_uint32*(address: uintptrt): uint32 {.exportpy.}  =
   ## # Description
@@ -619,7 +619,7 @@ proc read_float64*(address: uintptrt): float64 {.exportpy.}  =
   return readmemory(address, float64)
 
 proc originalReadmemoryex(process: ptr Processt; source: uintptrt; dest: ptr uint8; size: csize_t): csize_t {.cdecl, importc: "LM_ReadMemoryEx".}
-proc readmemoryex*[T](process: ptr Processt; address: uintptrt; t: typedesc[T], size: Natural=1): T =
+proc readMemoryex*[T](process: ptr Processt; address: uintptrt; t: typedesc[T], size: Natural=1): T =
   when T is typeof(string|cstring):
     var st = newSeq[char](size)
     discard originalReadmemoryex(process, address, cast[ptr byte](addr st[0]), size.csize_t)
@@ -726,7 +726,7 @@ proc read_int64ex*(process:  Processt; address: uintptrt): int64 {.exportpy.}  =
   ## The signed 64-bit integer value read from the specified memory address in the target process.
   return readmemoryex(process.addr, address, int64)
 
-proc read_float32ex*(process:  Processt; address: uintptrt): float32 {.exportpy.}  =
+proc read_float_32ex*(process:  Processt; address: uintptrt): float32 {.exportpy.}  =
   ## # Description
   ## Reads a 32-bit floating-point number from a specified memory address in a target process.
   ##
@@ -751,8 +751,8 @@ proc read_float64ex*(process:  Processt; address: uintptrt): float64 {.exportpy.
   return readmemoryex(process.addr, address, float64)
 
 proc originalwritememory(dest: uintptrt; source: ptr byte; size: csize_t): csize_t {.cdecl, importc: "LM_WriteMemory".}
-proc writememory*[T](address: uintptrt, value: T, size: Natural=1) : bool =
-  if Protmemory(address, size.csize_t, Protxrw):
+proc writeMemory*[T](address: uintptrt, value: T, size: Natural=1) : bool =
+  if protmemory(address, size.csize_t, Protxrw):
     try:
        when T is typeof string or cstring:
           if originalwritememory(address, cast[ptr byte](addr value[0]), size.csize_t) == size:
@@ -770,13 +770,13 @@ proc writememory*[T](address: uintptrt, value: T, size: Natural=1) : bool =
           else:
             result = false
     except:
-      if Protmemory(address, size.csize_t, Protxrw):
+      if protmemory(address, size.csize_t, Protxrw):
         if writememory(address, value, size) == false:
-          discard Protmemory(address, size.csize_t, Protr)
+          discard protmemory(address, size.csize_t, Protr)
       else:
         raise newException(ValueError, "Memory protection error")
     finally:
-      discard Protmemory(address, size.csize_t, Protr)
+      discard protmemory(address, size.csize_t, Protr)
 
 proc write_uint8*(address: uintptrt; value: uint8) : bool {.exportpy.}  =
   ## # Description
@@ -869,8 +869,8 @@ proc write_float64*(address: uintptrt; value: float64)  : bool {.exportpy.}  =
   writememory(address, value)
 
 proc originalwritememoryex(process: ptr Processt; dest: uintptrt ;source: ptr byte; size: csize_t): csize_t {.cdecl, importc: "LM_WriteMemoryEx".}
-proc writememoryex*[T](process: Processt; address: uintptrt; value: T, size: Natural=1) : bool =
-  if Protmemoryex(process, address, size.csize_t, Protxrw):
+proc writeMemoryex*[T](process: Processt; address: uintptrt; value: T, size: Natural=1) : bool =
+  if protmemoryex(process, address, size.csize_t, Protxrw):
     try:
        when T is typeof string or cstring:
           if originalwritememoryex(process.addr, address, cast[ptr byte](addr value[0]), size.csize_t) == size:
@@ -888,13 +888,13 @@ proc writememoryex*[T](process: Processt; address: uintptrt; value: T, size: Nat
           else:
             result = false
     except:
-      if Protmemoryex(process, address, size.csize_t, Protxrw):
+      if protmemoryex(process, address, size.csize_t, Protxrw):
         if writememoryex(process, address, value, size) == false:
-          discard Protmemoryex(process, address, size.csize_t, Protr)
+          discard protmemoryex(process, address, size.csize_t, Protr)
       else:
         raise newException(ValueError, "Memory protection error")
     finally:
-      if Protmemoryex(process, address, size.csize_t, Protr) == false:
+      if protmemoryex(process, address, size.csize_t, Protr) == false:
         raise newException(ValueError, "Memory protection error")
 
 proc write_uint8ex*(process: Processt; address: uintptrt; value: uint8):bool {.exportpy.}  =
@@ -998,7 +998,7 @@ proc write_float64ex*(process: Processt; address: uintptrt; value: float64):bool
   writememoryex(process, address, value)
 
 proc originalAllocmemory(size: csize_t; prot: uint32): uintptrt {.cdecl, importc: "LM_AllocMemory".}
-proc Allocmemory*(size: csize_t; prot: uint32): uintptrt {.exportpy.}  = 
+proc allocMemory*(size: csize_t; prot: uint32): uintptrt {.exportpy: "alloc_memory".}  =
   ## # Description
   ## The function allocates memory with a specified size and protection flags,
   ## returning the allocated memory address.
@@ -1014,7 +1014,7 @@ proc Allocmemory*(size: csize_t; prot: uint32): uintptrt {.exportpy.}  =
 
 
 proc originalAllocmemoryex(process: ptr Processt; size: csize_t; prot: uint32): uintptrt {. cdecl, importc: "LM_AllocMemoryEx".}
-proc Allocmemoryex*(process: Processt; size: csize_t; prot: uint32): uintptrt {.exportpy.}  = 
+proc allocMemoryex*(process: Processt; size: csize_t; prot: uint32): uintptrt {.exportpy: "alloc_memory_ex".}  =
   ## # Description
   ## The function allocates memory in a specified process with the given size
   ## and memory protection flags.
@@ -1032,7 +1032,7 @@ proc Allocmemoryex*(process: Processt; size: csize_t; prot: uint32): uintptrt {.
 
 
 proc originalFreememory(alloc: uintptrt; size: csize_t): boolt {.cdecl, importc: "LM_FreeMemory".}
-proc Freememory*(alloc: uintptrt; size: csize_t): bool {.exportpy.}  = 
+proc freeMemory*(alloc: uintptrt; size: csize_t): bool {.exportpy: "free_memory".}  =
   ## # Description
   ## The function deallocates memory that was previously allocated with
   ## `AllocMemory`.
@@ -1048,7 +1048,7 @@ proc Freememory*(alloc: uintptrt; size: csize_t): bool {.exportpy.}  =
 
 
 proc originalFreememoryex(process: ptr Processt; alloc: uintptrt; size: csize_t): boolt {. cdecl, importc: "LM_FreeMemoryEx".}
-proc Freememoryex*(process: Processt; alloc: uintptrt; size: csize_t): bool {.exportpy.}  = 
+proc freeMemoryex*(process: Processt; alloc: uintptrt; size: csize_t): bool {.exportpy: "free_memory_ex".}  =
   ## # Description
   ## The function deallocates memory that was previously allocated with
   ## `AllocMemoryEx` on a given process.
@@ -1065,7 +1065,7 @@ proc Freememoryex*(process: Processt; alloc: uintptrt; size: csize_t): bool {.ex
 
 
 proc originalDeeppointer(base: uintptrt; offsets: ptr uintptrt; noffsets: csize_t): uintptrt {. cdecl, importc: "LM_DeepPointer".}
-proc Deeppointer*(base: uintptrt; offsets: seq[uintptrt]): uintptrt {.exportpy.}  = 
+proc deepPointer*(base: uintptrt; offsets: seq[uintptrt]): uintptrt {.exportpy: "deep_pointer".}  =
   ## # Description
   ## The function calculates a deep pointer address by applying a series of
   ## offsets to a base address and dereferencing intermediate pointers.
@@ -1082,7 +1082,7 @@ proc Deeppointer*(base: uintptrt; offsets: seq[uintptrt]): uintptrt {.exportpy.}
 
 
 proc originalDeeppointerex(process: ptr Processt; base: uintptrt; offsets: ptr uintptrt; noffsets: csize_t): uintptrt {.cdecl, importc: "LM_DeepPointerEx".}
-proc Deeppointerex*(process: Processt; base: uintptrt; offsets: seq[uintptrt]): uintptrt {.exportpy.}  = 
+proc deepPointerex*(process: Processt; base: uintptrt; offsets: seq[uintptrt]): uintptrt {.exportpy: "deep_pointer_ex".}  =
   ## # Description
   ## The function `DeepPointerEx` calculates a deep pointer address by applying a series of offsets to a
   ## base address and dereferencing intermediate pointers in a given process's memory space.
@@ -1098,7 +1098,7 @@ proc Deeppointerex*(process: Processt; base: uintptrt; offsets: seq[uintptrt]): 
   ## base address and dereferencing accordingly.
   return originalDeeppointerex(process.addr, base, cast[ptr uintptrt](addr offsets[0]), offsets.len.csize_t)
 
-proc pointerchain64*(process: Processt, base: uintptrt, offsets: openArray[SomeInteger]): uint64  =
+proc pointerChain64*(process: Processt, base: uintptrt, offsets: openArray[byte]): uint64 {.exportpy.}  =
   ## # Description
   ## This is a pure Nim integration of the DeepPointerEx function. I just like it more this way.
   ##
@@ -1119,7 +1119,7 @@ proc pointerchain64*(process: Processt, base: uintptrt, offsets: openArray[SomeI
   result = result + offsets[^1].uint64
 
 proc originalDatascan(data: ptr uint8; datasize: csize_t; address: uintptrt; scansize: csize_t): uintptrt {.cdecl, importc: "LM_DataScan".}
-proc Datascan*(data: seq[byte]; address: uintptrt, scansize: csize_t): uintptrt {.exportpy.}  =
+proc dataScan*(data: seq[byte]; address: uintptrt, scansize: csize_t): uintptrt {.exportpy: "data_scan".}  =
   ## # Description
   ## The function scans a specified memory address range for a specific data
   ## pattern and returns the address where the data is found.
@@ -1137,7 +1137,7 @@ proc Datascan*(data: seq[byte]; address: uintptrt, scansize: csize_t): uintptrt 
 
 
 proc originalDatascanex(process: ptr Processt; data: ptr uint8; datasize: csize_t; address: uintptrt; scansize: csize_t): uintptrt {.cdecl, importc: "LM_DataScanEx".}
-proc Datascanex*(process: Processt; data: seq[byte]; address: uintptrt, scansize: csize_t): uintptrt {.exportpy.}  =
+proc dataScanex*(process: Processt; data: seq[byte]; address: uintptrt, scansize: csize_t): uintptrt {.exportpy: "data_scan_ex".}  =
   ## # Description
   ## The function scans a specified memory address range for a specific data
   ## pattern in a given process and returns the address where the data is
@@ -1157,7 +1157,7 @@ proc Datascanex*(process: Processt; data: seq[byte]; address: uintptrt, scansize
 
 
 proc originalPatternscan(pattern: ptr uint8; mask: cstring; address: uintptrt; scansize: csize_t): uintptrt {.cdecl, importc: "LM_PatternScan".}
-proc Patternscan*(pattern: seq[byte]; mask: string; address: uintptrt, scansize: csize_t): uintptrt {.exportpy.}  =
+proc patternScan*(pattern: seq[byte]; mask: string; address: uintptrt, scansize: csize_t): uintptrt {.exportpy: "pattern_scan".}  =
   ## # Description
   ## The function searches for a specific pattern in memory based on a given
   ## mask.
@@ -1177,7 +1177,7 @@ proc Patternscan*(pattern: seq[byte]; mask: string; address: uintptrt, scansize:
 
 
 proc originalPatternscanex(process: ptr Processt; pattern: ptr uint8; mask: cstring; address: uintptrt; scansize: csize_t): uintptrt {.cdecl, importc: "LM_PatternScanEx".}
-proc Patternscanex*(process: Processt; pattern: seq[byte]; mask: string; address: uintptrt, scansize: csize_t): uintptrt {.exportpy.}  = 
+proc patternScanex*(process: Processt; pattern: seq[byte]; mask: string; address: uintptrt, scansize: csize_t): uintptrt {.exportpy: "pattern_scan_ex".}  =
   ## # Description
   ## The function searches for a specific pattern in memory in a given process based on a mask.
   ##
@@ -1196,7 +1196,7 @@ proc Patternscanex*(process: Processt; pattern: seq[byte]; mask: string; address
 
 
 proc originalSigscan(signature: cstring; address: uintptrt; scansize: csize_t): uintptrt {. cdecl, importc: "LM_SigScan".}
-proc Sigscan*(signature: string; address: uintptrt, scansize: csize_t): uintptrt {.exportpy.}  = 
+proc sigScan*(signature: string; address: uintptrt, scansize: csize_t): uintptrt {.exportpy: "sig_scan".}  =
   ## # Description
   ## The function searches for a specific signature pattern in memory starting from a given address
   ## within a specified scan size.
@@ -1213,7 +1213,7 @@ proc Sigscan*(signature: string; address: uintptrt, scansize: csize_t): uintptrt
 
 
 proc originalSigscanex(process: ptr Processt; signature: cstring; address: uintptrt; scansize: csize_t): uintptrt {.cdecl, importc: "LM_SigScanEx".}
-proc Sigscanex*(process: Processt; signature: string; address: uintptrt, scansize: csize_t): uintptrt {.exportpy.}  = 
+proc sigScanex*(process: Processt; signature: string; address: uintptrt, scansize: csize_t): uintptrt {.exportpy: "sig_scan_ex".}  =
   ## # Description
   ## The function searches for a specific signature pattern in memory from a given process starting
   ## from a specific address within a specified scan size.
@@ -1230,8 +1230,8 @@ proc Sigscanex*(process: Processt; signature: string; address: uintptrt, scansiz
   return originalSigscanex(process.addr, signature, address, scansize)
 
 
-proc originalGetarchitecture(): uint32 {.cdecl, importc: "LM_GetArchitecture".}
-proc Getarchitecture*(): uint32 {.exportpy.}  = 
+proc originalgetarchitecture(): uint32 {.cdecl, importc: "LM_GetArchitecture".}
+proc getArchitecture*(): uint32 {.exportpy: "get_architecture".}  =
   ## # Description
   ## The function returns the current architecture.
   ##
@@ -1243,11 +1243,11 @@ proc Getarchitecture*(): uint32 {.exportpy.}  =
   ## - `ARCH_X86` for 32-bit x86.
   ## - `ARCH_AMD64` for 64-bit x86.
   ## - Check constants for more.
-  return originalGetarchitecture()
+  return originalgetarchitecture()
 
 
 proc originalFindsymboladdress(module: ptr Modulet; symbolname: cstring): uintptrt {.cdecl, importc: "LM_FindSymbolAddress".}
-proc Findsymboladdress*(module: Modulet; symbolname: string): uintptrt {.exportpy.}  = 
+proc findSymboladdress*(module: Modulet; symbolname: string): uintptrt {.exportpy: "find_symbol_address".}  =
   ## # Description
   ## Finds the address of a symbol within a module.
   ##
@@ -1261,7 +1261,7 @@ proc Findsymboladdress*(module: Modulet; symbolname: string): uintptrt {.exportp
 
 
 proc originalAssemble(code: cstring; instructionout: ptr Instructiont): boolt {.cdecl, importc: "LM_Assemble".}
-proc Assemble*(code: string): Instructiont {.exportpy.}  = 
+proc assemble*(code: string): Instructiont {.exportpy.}  = 
   ## # Description
   ## The function assembles a single instruction into machine code.
   ##
@@ -1274,14 +1274,14 @@ proc Assemble*(code: string): Instructiont {.exportpy.}  =
 
 
 proc originalAssembleex(code: cstring; arch: uint32; bits: csize_t; runtimeaddress: uintptrt; payloadout: ptr ptr uint8): csize_t {. cdecl, importc: "LM_AssembleEx".}
-proc Assembleex*(code: string, runtimeaddress: uintptrt, arch: uint32 = Getarchitecture(), bits: csize_t= GetBits()): csize_t {.exportpy.}  =
+proc assembleex*(code: string, runtimeaddress: uintptrt, arch: uint32 = getarchitecture(), bits: csize_t= getBits()): csize_t {.exportpy.}  =
   ## # Description
   ## The function assembles instructions into machine code.
   ##
   ## # Parameters
   ##  - `code`: The instructions to be assembled. Example: `"mov eax, ebx ; jmp eax"`.
-  ##  - `arch`: The architecture to be assembled = defaullt(Getarchitecture())
-  ##  - `bits`: The bitness of the architecture to be assembled = default(Getbits()). It can be `32` or `64`.
+  ##  - `arch`: The architecture to be assembled = defaullt(getarchitecture())
+  ##  - `bits`: The bitness of the architecture to be assembled = default(getBits()). It can be `32` or `64`.
   ##  - `runtime_address`: The runtime address to resolve the addressing (for example, relative jumps will be resolved using this address).
   ##  - `payload_out`: A pointer to the buffer that will receive the assembled instructions. The buffer should be freed with `FreePayload` after use.
   ##
@@ -1291,7 +1291,7 @@ proc Assembleex*(code: string, runtimeaddress: uintptrt, arch: uint32 = Getarchi
 
 
 proc originalFreepayload(payload: ptr uint8): void {.cdecl, importc: "LM_FreePayload".}
-proc Freepayload*(payload: seq[byte]): void {.exportpy.}  = 
+proc freePayload*(payload: seq[byte]): void {.exportpy: "free_payload".}  =
   ## # Description
   ## The function deallocates memory allocated by `AssembleEx`.
   ##
@@ -1304,7 +1304,7 @@ proc Freepayload*(payload: seq[byte]): void {.exportpy.}  =
 
 
 proc originalDisassemble(machinecode: uintptrt; instructionout: ptr Instructiont): boolt {. cdecl, importc: "LM_Disassemble".}
-proc Disassemble*(machinecode: openArray[byte]): Instructiont =
+proc disassemble*(machinecode: openArray[byte]): Instructiont {.exportpy.}  =
   ## # Description
   ## The function disassembles one instruction into an `Instructiont` struct.
   ##
@@ -1317,7 +1317,7 @@ proc Disassemble*(machinecode: openArray[byte]): Instructiont =
 
 
 proc originalDisassembleex(machinecode: uintptrt; arch: uint32; bits: csize_t; maxsize: csize_t; instructioncount: csize_t; runtimeaddress: uintptrt; instructionsout: ptr ptr Instructiont): csize_t {.cdecl, importc: "LM_DisassembleEx".}
-proc Disassembleex*(machine_code: openArray[byte], address: uintptrt, maxsize:  csize_t=16,  arch: uint32 = Archx86, bits: csize_t= 64.csize_t,): ptr Instructiont =
+proc disassembleex*(machine_code: openArray[byte], address: uintptrt, maxsize:  csize_t=16,  arch: uint32 = Archx86, bits: csize_t= 64.csize_t,): ptr Instructiont =
   ## # Description
   ## The function disassembles instructions into an array of `Instructiont` structs.
   ##
@@ -1326,8 +1326,8 @@ proc Disassembleex*(machine_code: openArray[byte], address: uintptrt, maxsize:  
   ##  - `runtime_address`: The runtime address to resolve the addressing (for example, relative jumps will be resolved using this address).
   ##  - `instruction_count`: The amount of instructions to disassemble (0 for as many as possible, limited by `max_size`) = default(0).
   ##  - `max_size`: The maximum number of bytes to disassemble (0 for as many as possible, limited by `instruction_count`) = default(0).
-  ##  - `arch`: The architecture to be disassembled = default(Getarchitecture())
-  ##  - `bits`: The bitness of the architecture to be disassembled = default(Getbits()). It can be `32` or `64`.
+  ##  - `arch`: The architecture to be disassembled = default(getarchitecture())
+  ##  - `bits`: The bitness of the architecture to be disassembled = default(getBits()). It can be `32` or `64`.
   ##
   ## # Return Value
   ## On success, it returns an array of `Instructiont` structures containing the disassembled instructions. On failure, it returns an empty sequence.
@@ -1335,7 +1335,7 @@ proc Disassembleex*(machine_code: openArray[byte], address: uintptrt, maxsize:  
 
 
 proc originalFreeinstructions(instructions: ptr Instructiont): void {.cdecl, importc: "LM_FreeInstructions".}
-proc Freeinstructions*(instructions: seq[Instructiont]): void {.exportpy.}  = 
+proc freeInstructions*(instructions: seq[Instructiont]): void {.exportpy: "free_instructions".}  =
   ## # Description
   ## The function deallocates the memory allocated by `DisassembleEx` for the disassembled instructions.
   ##
@@ -1348,7 +1348,7 @@ proc Freeinstructions*(instructions: seq[Instructiont]): void {.exportpy.}  =
 
 
 proc originalCodelength(machinecode: uintptrt; minlength: csize_t): csize_t {.cdecl, importc: "LM_CodeLength".}
-proc CodeLength*(machinecode: uintptrt; minlength: csize_t): csize_t {.exportpy.}  = 
+proc codeLength*(machinecode: uintptrt; minlength: csize_t): csize_t {.exportpy: "code_length".}  =
   ## # Description
   ## The function calculates the size aligned to the instruction length, based on a minimum size.
   ##
@@ -1362,7 +1362,7 @@ proc CodeLength*(machinecode: uintptrt; minlength: csize_t): csize_t {.exportpy.
 
 
 proc originalCodelengthex(process: ptr Processt; machinecode: uintptrt; minlength: csize_t): csize_t {.cdecl, importc: "LM_CodeLengthEx".}
-proc CodeLengthex*(process: Processt; machinecode: uintptrt; minlength: csize_t): csize_t {.exportpy.}  = 
+proc codeLengthex*(process: Processt; machinecode: uintptrt; minlength: csize_t): csize_t {.exportpy: "code_length_ex".}  =
   ## # Description
   ## The function calculates the size aligned to the instruction length, based on a minimum size, in a remote process.
   ##
@@ -1377,7 +1377,7 @@ proc CodeLengthex*(process: Processt; machinecode: uintptrt; minlength: csize_t)
 
 
 proc originalHookcode(fromarg: uintptrt; to: uintptrt; trampolineout: ptr uintptrt): csize_t {. cdecl, importc: "LM_HookCode".}
-proc Hookcode*(fromarg: uintptrt; to: uintptrt): tuple[trampout: uintptrt, size: csize_t] {.exportpy.}  =
+proc hookCode*(fromarg: uintptrt; to: uintptrt): tuple[trampout: uintptrt, size: csize_t] {.exportpy: "hook_code".}  =
   ## # Description
   ## The function places a hook/detour onto the address `from`, redirecting it to the address `to`. Optionally, it generates a trampoline in `trampoline_out` to call the original function.
   ##
@@ -1394,7 +1394,7 @@ proc Hookcode*(fromarg: uintptrt; to: uintptrt): tuple[trampout: uintptrt, size:
 
 
 proc originalHookcodeex(process: ptr Processt; fromarg: uintptrt; to: uintptrt; trampolineout: ptr uintptrt): csize_t {.cdecl, importc: "LM_HookCodeEx".}
-proc Hookcodeex*(process: Processt; fromarg: uintptrt; to: uintptrt): tuple[trampout: uintptrt, size: csize_t] {.exportpy.}  =
+proc hookCodeex*(process: Processt; fromarg: uintptrt; to: uintptrt): tuple[trampout: uintptrt, size: csize_t] {.exportpy: "hook_code_ex".}  =
   ## # Description
   ## The function places a hook/detour onto the address `from` in a remote process, redirecting it to the address `to`.
   ## Optionally, it generates a trampoline in `trampoline_out` to call the original function in the remote process.
@@ -1413,7 +1413,7 @@ proc Hookcodeex*(process: Processt; fromarg: uintptrt; to: uintptrt): tuple[tram
 
 
 proc originalUnhookcode(fromarg: uintptrt; trampoline: uintptrt; size: csize_t): boolt {. cdecl, importc: "LM_UnhookCode".}
-proc Unhookcode*(fromarg: uintptrt; trampoline: uintptrt; size: csize_t): bool {.exportpy.}  = 
+proc unhookCode*(fromarg: uintptrt; trampoline: uintptrt; size: csize_t): bool {.exportpy: "unhook_code".}  =
   ## # Description
   ## The function removes a hook/detour placed on the address `from`, restoring it to its original state.
   ## The function also frees the trampoline allocated by `HookCode`.
@@ -1429,7 +1429,7 @@ proc Unhookcode*(fromarg: uintptrt; trampoline: uintptrt; size: csize_t): bool {
 
 
 proc originalUnhookcodeex(process: ptr Processt; fromarg: uintptrt; trampoline: uintptrt; size: csize_t): boolt {.cdecl, importc: "LM_UnhookCodeEx".}
-proc Unhookcodeex*(process: Processt; fromarg: uintptrt; trampoline: uintptrt; size: csize_t): bool {.exportpy.}  = 
+proc unhookCodeex*(process: Processt; fromarg: uintptrt; trampoline: uintptrt; size: csize_t): bool {.exportpy: "unhook_code_ex".}  =
   ## # Description
   ## The function removes a hook/detour placed on the address `from` in a remote process, restoring it to its original state.
   ## The function also frees the trampoline allocated by `HookCodeEx`.
@@ -1446,7 +1446,7 @@ proc Unhookcodeex*(process: Processt; fromarg: uintptrt; trampoline: uintptrt; s
 
 
 proc originalVmtnew(vtable: ptr uintptrt; vmtout: ptr Vmtt): boolt {.cdecl, importc: "LM_VmtNew".}
-proc Vmtnew*(vtable:  uintptrt): Vmtt  =
+proc vmtnew*(vtable:  uintptrt): Vmtt  =
   ### Note: Currently not accessible from Python
   ## # Description
   ## The function creates a new VMT manager from a given VMT table.
@@ -1460,7 +1460,7 @@ proc Vmtnew*(vtable:  uintptrt): Vmtt  =
 
 
 proc originalVmthook(vmt: ptr Vmtt; fromfnindex: csize_t; to: uintptrt): boolt {.cdecl, importc: "LM_VmtHook".}
-proc Vmthook*(vmt: Vmtt; fromfnindex: csize_t; to: uintptrt): boolt  =
+proc vmtHook*(vmt: Vmtt; fromfnindex: csize_t; to: uintptrt): boolt  =
   ### Note: Currently not accessible from Python
   ## # Description
   ## The function hooks the VMT function at index `from_fn_index` in the VMT managed by `vmt`,
@@ -1477,7 +1477,7 @@ proc Vmthook*(vmt: Vmtt; fromfnindex: csize_t; to: uintptrt): boolt  =
 
 
 proc originalVmtunhook(vmt: ptr Vmtt; fnindex: csize_t): void {.cdecl, importc: "LM_VmtUnhook".}
-proc Vmtunhook*(vmt:  Vmtt; fnindex: csize_t): void =
+proc vmtUnhook*(vmt:  Vmtt; fnindex: csize_t): void =
   ### Note: Currently not accessible from Python
   ## # Description
   ## The function unhooks the VMT function at index `fn_index` in the VMT managed by `vmt`,
@@ -1493,7 +1493,7 @@ proc Vmtunhook*(vmt:  Vmtt; fnindex: csize_t): void =
 
 
 proc vmtgetoriginaloriginal(vmt: ptr Vmtt; fnindex: csize_t): uintptrt {.discardable, cdecl, importc: "LM_VmtGetOriginal".}
-proc Vmtgetoriginal*(vmt: Vmtt; fnindex: csize_t): uintptrt =
+proc vmtgetoriginal*(vmt: Vmtt; fnindex: csize_t): uintptrt =
   ## # Description
   ## The function retrieves the original function pointer from the VMT manager at index `fn_index`.
   ##
@@ -1507,7 +1507,7 @@ proc Vmtgetoriginal*(vmt: Vmtt; fnindex: csize_t): uintptrt =
 
 
 proc vmtresetoriginal(vmt: ptr Vmtt): void {.discardable, cdecl, importc: "LM_VmtReset".}
-proc Vmtreset*(vmt: Vmtt): void   =
+proc vmtReset*(vmt: Vmtt): void   =
   ## # Description
   ## The function resets the VMT manager, restoring all original functions.
   ##
@@ -1519,8 +1519,8 @@ proc Vmtreset*(vmt: Vmtt): void   =
   vmtresetoriginal(vmt.addr)
 
 
-proc vmtfreeoriginal(vmt: ptr Vmtt): void {.discardable, cdecl, importc: "LM_VmtFree".}
-proc Vmtfree*(vmt: Vmtt): void   =
+proc vmtFreeoriginal(vmt: ptr Vmtt): void {.discardable, cdecl, importc: "LM_VmtFree".}
+proc vmtFree*(vmt: Vmtt): void   =
   ## # Description
   ## The function frees the VMT manager.
   ##

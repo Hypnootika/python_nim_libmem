@@ -1,8 +1,10 @@
-const p = getCurrentDir() & "\\src\\lib\\libmem.lib"
-echo(p)
-switch("cc", "vcc")
-switch("define", "debug")
-switch("threads", "off")
-
-switch("passL", p&" ntdll.lib shell32.lib")
-switch("passC", "/MD")
+when defined(windows):
+  withDir(thisDir()):
+    const p = thisDir() & r"\..\src\lib\libmem.lib"
+    switch("app", "console")
+    switch("cc", "vcc")
+    switch("define", "debug")
+    switch("threads", "off")
+    switch("verbosity", "0")
+    switch("passL", p&" ntdll.lib shell32.lib")
+    switch("passC", "/MD")

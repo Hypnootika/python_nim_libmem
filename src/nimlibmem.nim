@@ -78,6 +78,8 @@ converter cstringToStringt*(x: cstring): cstr {.used, inline.} = cast[cstr]($x)
 converter charArrayToCstring*(x: array[32, char]): cstring {.used, inline.} = cast[cstring]((distinctBase(array[32, char])x)[0].addr)
 converter charArrayToCstring*(x: array[160, char]): cstring {.used, inline.} = cast[cstring]((distinctBase(array[160, char])x)[0].addr)
 
+
+
 proc cb*[T](c: ptr T; arg: pointer): boolt {.cdecl.} =
   cast[ptr seq[T]](arg)[].add(c[])
   result = 1
@@ -192,7 +194,6 @@ proc Enumthreads*(): seq[Threadt] {.exportpy.}  =
   discard originalEnumthreads(cb, result.addr)
 
 
-
 proc originalEnumthreadsex(process: ptr Processt; callback: proc (a0: ptr Threadt; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumThreadsEx".}
 proc Enumthreadsex*(process: Processt): seq[Threadt] {.exportpy.}  =
   ## # Description
@@ -219,7 +220,6 @@ proc Getthread*(): Threadt {.exportpy.}  =
   discard originalGetthread(result.addr)
 
 
-
 proc originalGetthreadex(process: ptr Processt; threadout: ptr Threadt): boolt {.cdecl, importc: "LM_GetThreadEx".}
 proc Getthreadex*(process: Processt): Threadt {.exportpy.}  = 
   ## # Description
@@ -231,7 +231,6 @@ proc Getthreadex*(process: Processt): Threadt {.exportpy.}  =
   ## # Return Value
   ## A `Threadt` structure containing information about the thread in the specified process.
   discard originalGetthreadex(process.addr, result.addr)
-
 
 
 proc originalGetthreadprocess(thread: ptr Threadt; processout: ptr Processt): boolt {. cdecl, importc: "LM_GetThreadProcess".}
@@ -251,7 +250,6 @@ proc Getthreadprocess*(thread: Threadt): Processt {.exportpy.}  =
   discard originalGetthreadprocess(thread.addr, result.addr)
 
 
-
 proc originalEnummodules(callback: proc (a0: ptr Modulet; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumModules".}
 proc Enummodules*(): seq[Modulet] {.exportpy.}  = 
   ## # Description
@@ -264,7 +262,6 @@ proc Enummodules*(): seq[Modulet] {.exportpy.}  =
   ## # Return Value
   ## A sequence of `Modulet` structures containing information about each module.
   discard originalEnummodules(cb, result.addr)
-
 
 
 proc originalEnummodulesex(process: ptr Processt; callback: proc (a0: ptr Modulet; a1: pointer): boolt {.cdecl.}; arg: pointer): boolt {.cdecl, importc: "LM_EnumModulesEx".}
@@ -309,7 +306,7 @@ proc Findmoduleex*(process: Processt; name: string): Modulet {.exportpy.}  =
   ## A `Modulet` structure containing information about the found module.
   discard originalFindmoduleex(process.addr, name, result.addr)
 
-
+template currentmodulebase*(): uintptrt = Findmodule($charArrayToCstring(Getprocess().name)).base
 
 proc originalLoadmodule(path: cstring; moduleout: ptr Modulet): boolt {.cdecl, importc: "LM_LoadModule".}
 proc Loadmodule*(path: string): bool {.exportpy.}  =
@@ -322,8 +319,6 @@ proc Loadmodule*(path: string): bool {.exportpy.}  =
   ## # Return Value
   ## Returns `TRUE` is the module was loaded successfully, or `FALSE` if it fails.
   return originalLoadmodule(path, nil).bool
-
-
 
 proc originalLoadmoduleex(process: ptr Processt; path: cstring; moduleout: ptr Modulet): boolt {. cdecl, importc: "LM_LoadModuleEx".}
 proc Loadmoduleex*(process: Processt; path: string): bool {.exportpy.}  =
@@ -431,11 +426,6 @@ proc Findsegmentex*(process: Processt; address: uintptrt): Segmentt {.exportpy.}
   ## The function returns a `Segmentt` structure containing information about the segment that contains the specified address.
   discard originalFindsegmentex(process.addr, address, result.addr)
 
-
-proc originalReadmemory(source: uintptrt; dest: ptr uint8; size: csize_t): csize_t {. cdecl, importc: "LM_ReadMemory".}
-proc originalReadmemoryex(process: ptr Processt; source: uintptrt; dest: ptr uint8; size: csize_t): csize_t {.cdecl, importc: "LM_ReadMemoryEx".}
-
-
 proc originalSetmemory(dest: uintptrt; byte: uint8; size: csize_t): csize_t {.cdecl, importc: "LM_SetMemory".}
 proc Setmemory*(dest: uintptrt; byte: uint8; size: csize_t): csize_t {.exportpy.}  = 
   ## # Description
@@ -488,7 +478,7 @@ proc Protmemory*(address: uintptrt; size: csize_t; prot: uint32): bool {.exportp
 
 
 proc originalProtmemoryex(process: ptr Processt; address: uintptrt; size: csize_t; prot: uint32; oldprotout: ptr uint32): boolt {.cdecl, importc: "LM_ProtMemoryEx".}
-proc Protmemoryex*(process: Processt; address: uintptrt; size: csize_t; prot: uint32): bool {.exportpy.}  = 
+proc Protmemoryex*(process: Processt; address: uintptrt; size: csize_t; prot: uint32): bool {.exportpy.}  =
   ## # Description
   ## The function modifies memory protection flags for a specified address range in a given process.
   ##
@@ -504,6 +494,508 @@ proc Protmemoryex*(process: Processt; address: uintptrt; size: csize_t; prot: ui
   ## operation was successful and `FALSE` if it was not.
   return originalProtmemoryex(process.addr, address, size, prot, nil).bool
 
+
+proc originalReadmemory(source: uintptrt; dest: ptr uint8; size: csize_t): csize_t {. cdecl, importc: "LM_ReadMemory".}
+proc readmemory*[T](address: uintptrt, t: typedesc[T], size: Natural=1): T  =
+  when T is typeof(string|cstring):
+    var st = newSeq[char](size)
+    discard originalReadmemory(address, cast[ptr byte](addr st[0]), size.csize_t)
+    result = cast[T](st)
+  when T is typeof(seq):
+    setLen(result, size)
+    discard originalReadmemory(address, result[0].addr, size.csize_t)
+  else:
+    discard originalReadmemory(address, cast[ptr byte](addr result), sizeof(T).csize_t)
+
+## Due to Python incompatibility with Type T, we are exposing fixed type reads and writes:
+proc read_uint8*(address: uintptrt): uint8 {.exportpy.}  =
+  ## # Description
+  ## Reads an unsigned 8-bit integer from a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address from which the unsigned 8-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The unsigned 8-bit integer value read from the specified memory address.
+  return readmemory(address, uint8)
+
+proc read_uint16*(address: uintptrt): uint16 {.exportpy.}  =
+  ## # Description
+  ## Reads an unsigned 16-bit integer from a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address from which the unsigned 16-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The unsigned 16-bit integer value read from the specified memory address.
+  return readmemory(address, uint16)
+
+proc read_uint32*(address: uintptrt): uint32 {.exportpy.}  =
+  ## # Description
+  ## Reads an unsigned 32-bit integer from a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address from which the unsigned 32-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The unsigned 32-bit integer value read from the specified memory address.
+  return readmemory(address, uint32)
+
+proc read_uint64*(address: uintptrt): uint64 {.exportpy.}  =
+  ## # Description
+  ## Reads an unsigned 64-bit integer from a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address from which the unsigned 64-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The unsigned 64-bit integer value read from the specified memory address.
+  return readmemory(address, uint64)
+
+proc read_int8*(address: uintptrt): int8 {.exportpy.}  =
+  ## # Description
+  ## Reads a signed 8-bit integer from a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address from which the signed 8-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The signed 8-bit integer value read from the specified memory address.
+  return readmemory(address, int8)
+
+proc read_int16*(address: uintptrt): int16 {.exportpy.}  =
+  ## # Description
+  ## Reads a signed 16-bit integer from a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address from which the signed 16-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The signed 16-bit integer value read from the specified memory address.
+  return readmemory(address, int16)
+
+proc read_int32*(address: uintptrt): int32 {.exportpy.}  =
+  ## # Description
+  ## Reads a signed 32-bit integer from a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address from which the signed 32-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The signed 32-bit integer value read from the specified memory address.
+  return readmemory(address, int32)
+
+proc read_int64*(address: uintptrt): int64 {.exportpy.}  =
+  ## # Description
+  ## Reads a signed 64-bit integer from a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address from which the signed 64-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The signed 64-bit integer value read from the specified memory address.
+  return readmemory(address, int64)
+
+proc read_float32*(address: uintptrt): float32 {.exportpy.}  =
+  ## # Description
+  ## Reads a 32-bit floating-point number from a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address from which the 32-bit floating-point number will be read.
+  ##
+  ## # Return Value
+  ## The 32-bit floating-point number value read from the specified memory address.
+  return readmemory(address, float32)
+
+proc read_float64*(address: uintptrt): float64 {.exportpy.}  =
+  ## # Description
+  ## Reads a 64-bit floating-point number from a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address from which the 64-bit floating-point number will be read.
+  ##
+  ## # Return Value
+  ## The 64-bit floating-point number value read from the specified memory address.
+  return readmemory(address, float64)
+
+proc originalReadmemoryex(process: ptr Processt; source: uintptrt; dest: ptr uint8; size: csize_t): csize_t {.cdecl, importc: "LM_ReadMemoryEx".}
+proc readmemoryex*[T](process: ptr Processt; address: uintptrt; t: typedesc[T], size: Natural=1): T =
+  when T is typeof(string|cstring):
+    var st = newSeq[char](size)
+    discard originalReadmemoryex(process, address, cast[ptr byte](addr st[0]), size.csize_t)
+    result = cast[T](st)
+  when T is typeof(seq):
+    setLen(result, size)
+    discard originalReadmemoryex(process, address, result[0].addr, size.csize_t)
+  else:
+    discard originalReadmemoryex(process, address, cast[ptr byte](addr result), sizeof(T).csize_t)
+
+proc read_uint8ex*(process: Processt; address: uintptrt): uint8 {.exportpy.}  =
+  ## # Description
+  ## Reads an unsigned 8-bit integer from a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the unsigned 8-bit integer will be read from.
+  ##  - `address`: The memory address from which the unsigned 8-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The unsigned 8-bit integer value read from the specified memory address in the target process.
+  return readmemoryex(process.addr, address, uint8)
+
+proc read_uint16ex*(process:  Processt; address: uintptrt): uint16 {.exportpy.}  =
+  ## # Description
+  ## Reads an unsigned 16-bit integer from a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the unsigned 16-bit integer will be read from.
+  ##  - `address`: The memory address from which the unsigned 16-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The unsigned 16-bit integer value read from the specified memory address in the target process.
+  return readmemoryex(process.addr, address, uint16)
+
+proc read_uint32ex*(process:  Processt; address: uintptrt): uint32 {.exportpy.}  =
+  ## # Description
+  ## Reads an unsigned 32-bit integer from a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the unsigned 32-bit integer will be read from.
+  ##  - `address`: The memory address from which the unsigned 32-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The unsigned 32-bit integer value read from the specified memory address in the target process.
+  return readmemoryex(process.addr, address, uint32)
+
+proc read_uint64ex*(process:  Processt; address: uintptrt): uint64 {.exportpy.}  =
+  ## # Description
+  ## Reads an unsigned 64-bit integer from a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the unsigned 64-bit integer will be read from.
+  ##  - `address`: The memory address from which the unsigned 64-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The unsigned 64-bit integer value read from the specified memory address in the target process.
+  return readmemoryex(process.addr, address, uint64)
+
+proc read_int8ex*(process:  Processt; address: uintptrt): int8 {.exportpy.}  =
+  ## # Description
+  ## Reads a signed 8-bit integer from a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the signed 8-bit integer will be read from.
+  ##  - `address`: The memory address from which the signed 8-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The signed 8-bit integer value read from the specified memory address in the target process.
+  return readmemoryex(process.addr, address, int8)
+
+proc read_int16ex*(process:  Processt; address: uintptrt): int16 {.exportpy.}  =
+  ## # Description
+  ## Reads a signed 16-bit integer from a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the signed 16-bit integer will be read from.
+  ##  - `address`: The memory address from which the signed 16-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The signed 16-bit integer value read from the specified memory address in the target process.
+  return readmemoryex(process.addr, address, int16)
+
+proc read_int32ex*(process:  Processt; address: uintptrt): int32 {.exportpy.}  =
+  ## # Description
+  ## Reads a signed 32-bit integer from a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the signed 32-bit integer will be read from.
+  ##  - `address`: The memory address from which the signed 32-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The signed 32-bit integer value read from the specified memory address in the target process.
+  return readmemoryex(process.addr, address, int32)
+
+proc read_int64ex*(process:  Processt; address: uintptrt): int64 {.exportpy.}  =
+  ## # Description
+  ## Reads a signed 64-bit integer from a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the signed 64-bit integer will be read from.
+  ##  - `address`: The memory address from which the signed 64-bit integer will be read.
+  ##
+  ## # Return Value
+  ## The signed 64-bit integer value read from the specified memory address in the target process.
+  return readmemoryex(process.addr, address, int64)
+
+proc read_float32ex*(process:  Processt; address: uintptrt): float32 {.exportpy.}  =
+  ## # Description
+  ## Reads a 32-bit floating-point number from a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the 32-bit floating-point number will be read from.
+  ##  - `address`: The memory address from which the 32-bit floating-point number will be read.
+  ##
+  ## # Return Value
+  ## The 32-bit floating-point number value read from the specified memory address in the target process.
+  return readmemoryex(process.addr, address, float32)
+
+proc read_float64ex*(process:  Processt; address: uintptrt): float64 {.exportpy.}  =
+  ## # Description
+  ## Reads a 64-bit floating-point number from a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the 64-bit floating-point number will be read from.
+  ##  - `address`: The memory address from which the 64-bit floating-point number will be read.
+  ##
+  ## # Return Value
+  ## The 64-bit floating-point number value read from the specified memory address in the target process.
+  return readmemoryex(process.addr, address, float64)
+
+proc originalwritememory(dest: uintptrt; source: ptr byte; size: csize_t): csize_t {.cdecl, importc: "LM_WriteMemory".}
+proc writememory*[T](address: uintptrt, value: T, size: Natural=1) : bool =
+  if Protmemory(address, size.csize_t, Protxrw):
+    try:
+       when T is typeof string or cstring:
+          if originalwritememory(address, cast[ptr byte](addr value[0]), size.csize_t) == size:
+            result = true
+          else:
+            result = false
+       when T is typeof seq:
+          if originalwritememory(address, value[0].addr, size.csize_t) == size:
+            result = true
+          else:
+            result = false
+       else:
+          if originalwritememory(address, cast[ptr byte](addr value), sizeof(T).csize_t) == sizeof(T).csize_t:
+            result = true
+          else:
+            result = false
+    except:
+      if Protmemory(address, size.csize_t, Protxrw):
+        if writememory(address, value, size) == false:
+          discard Protmemory(address, size.csize_t, Protr)
+      else:
+        raise newException(ValueError, "Memory protection error")
+    finally:
+      discard Protmemory(address, size.csize_t, Protr)
+
+proc write_uint8*(address: uintptrt; value: uint8) : bool {.exportpy.}  =
+  ## # Description
+  ## Writes an unsigned 8-bit integer to a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address where the unsigned 8-bit integer will be written.
+  ##  - `value`: The unsigned 8-bit integer value that will be written to the memory address.
+  writememory(address, value)
+
+proc write_uint16*(address: uintptrt; value: uint16)  : bool {.exportpy.}  =
+  ## # Description
+  ## Writes an unsigned 16-bit integer to a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address where the unsigned 16-bit integer will be written.
+  ##  - `value`: The unsigned 16-bit integer value that will be written to the memory address.
+  writememory(address, value)
+
+proc write_uint32*(address: uintptrt; value: uint32)  : bool {.exportpy.}  =
+  ## # Description
+  ## Writes an unsigned 32-bit integer to a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address where the unsigned 32-bit integer will be written.
+  ##  - `value`: The unsigned 32-bit integer value that will be written to the memory address.
+  writememory(address, value)
+
+proc write_uint64*(address: uintptrt; value: uint64)  : bool {.exportpy.}  =
+  ## # Description
+  ## Writes an unsigned 64-bit integer to a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address where the unsigned 64-bit integer will be written.
+  ##  - `value`: The unsigned 64-bit integer value that will be written to the memory address.
+  writememory(address, value)
+
+proc write_int8*(address: uintptrt; value: int8)  : bool {.exportpy.}  =
+  ## # Description
+  ## Writes a signed 8-bit integer to a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address where the signed 8-bit integer will be written.
+  ##  - `value`: The signed 8-bit integer value that will be written to the memory address.
+  writememory(address, value)
+
+proc write_int16*(address: uintptrt; value: int16)  : bool {.exportpy.}  =
+  ## # Description
+  ## Writes a signed 16-bit integer to a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address where the signed 16-bit integer will be written.
+  ##  - `value`: The signed 16-bit integer value that will be written to the memory address.
+  writememory(address, value)
+
+proc write_int32*(address: uintptrt; value: int32)  : bool {.exportpy.}  =
+  ## # Description
+  ## Writes a signed 32-bit integer to a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address where the signed 32-bit integer will be written.
+  ##  - `value`: The signed 32-bit integer value that will be written to the memory address.
+  writememory(address, value)
+
+proc write_int64*(address: uintptrt; value: int64) : bool  {.exportpy.}  =
+  ## # Description
+  ## Writes a signed 64-bit integer to a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address where the signed 64-bit integer will be written.
+  ##  - `value`: The signed 64-bit integer value that will be written to the memory address.
+  writememory(address, value)
+
+proc write_float32*(address: uintptrt; value: float32) : bool {.exportpy.}  =
+  ## # Description
+  ## Writes a 32-bit floating-point number to a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address where the 32-bit floating-point number will be written.
+  ##  - `value`: The 32-bit floating-point number value that will be written to the memory address.
+  writememory(address, value)
+
+proc write_float64*(address: uintptrt; value: float64)  : bool {.exportpy.}  =
+  ## # Description
+  ## Writes a 64-bit floating-point number to a specified memory address.
+  ##
+  ## # Parameters
+  ##  - `address`: The memory address where the 64-bit floating-point number will be written.
+  ##  - `value`: The 64-bit floating-point number value that will be written to the memory address.
+  writememory(address, value)
+
+proc originalwritememoryex(process: ptr Processt; dest: uintptrt ;source: ptr byte; size: csize_t): csize_t {.cdecl, importc: "LM_WriteMemoryEx".}
+proc writememoryex*[T](process: Processt; address: uintptrt; value: T, size: Natural=1) : bool =
+  if Protmemoryex(process, address, size.csize_t, Protxrw):
+    try:
+       when T is typeof string or cstring:
+          if originalwritememoryex(process.addr, address, cast[ptr byte](addr value[0]), size.csize_t) == size:
+            result = true
+          else:
+            result = false
+       when T is typeof seq:
+          if originalwritememoryex(process.addr, address, value[0].addr, size.csize_t) == size:
+            result = true
+          else:
+            result = false
+       else:
+          if originalwritememoryex(process.addr, address, cast[ptr byte](addr value), sizeof(T).csize_t) == sizeof(T).csize_t:
+            result = true
+          else:
+            result = false
+    except:
+      if Protmemoryex(process, address, size.csize_t, Protxrw):
+        if writememoryex(process, address, value, size) == false:
+          discard Protmemoryex(process, address, size.csize_t, Protr)
+      else:
+        raise newException(ValueError, "Memory protection error")
+    finally:
+      if Protmemoryex(process, address, size.csize_t, Protr) == false:
+        raise newException(ValueError, "Memory protection error")
+
+proc write_uint8ex*(process: Processt; address: uintptrt; value: uint8):bool {.exportpy.}  =
+  ## # Description
+  ## Writes an unsigned 8-bit integer to a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the unsigned 8-bit integer will be written to.
+  ##  - `address`: The memory address where the unsigned 8-bit integer will be written.
+  ##  - `value`: The unsigned 8-bit integer value that will be written to the memory address.
+  writememoryex(process, address, value)
+
+proc write_uint16ex*(process: Processt; address: uintptrt; value: uint16):bool  {.exportpy.}  =
+  ## # Description
+  ## Writes an unsigned 16-bit integer to a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the unsigned 16-bit integer will be written to.
+  ##  - `address`: The memory address where the unsigned 16-bit integer will be written.
+  ##  - `value`: The unsigned 16-bit integer value that will be written to the memory address.
+  writememoryex(process, address, value)
+
+proc write_uint32ex*(process: Processt; address: uintptrt; value: uint32):bool  {.exportpy.}  =
+  ## # Description
+  ## Writes an unsigned 32-bit integer to a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the unsigned 32-bit integer will be written to.
+  ##  - `address`: The memory address where the unsigned 32-bit integer will be written.
+  ##  - `value`: The unsigned 32-bit integer value that will be written to the memory address.
+  writememoryex(process, address, value)
+
+proc write_uint64ex*(process: Processt; address: uintptrt; value: uint64):bool  {.exportpy.}  =
+  ## # Description
+  ## Writes an unsigned 64-bit integer to a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the unsigned 64-bit integer will be written to.
+  ##  - `address`: The memory address where the unsigned 64-bit integer will be written.
+  ##  - `value`: The unsigned 64-bit integer value that will be written to the memory address.
+  writememoryex(process, address, value)
+
+proc write_int8ex*(process: Processt; address: uintptrt; value: int8):bool  {.exportpy.}  =
+  ## # Description
+  ## Writes a signed 8-bit integer to a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the signed 8-bit integer will be written to.
+  ##  - `address`: The memory address where the signed 8-bit integer will be written.
+  ##  - `value`: The signed 8-bit integer value that will be written to the memory address.
+  writememoryex(process, address, value)
+
+proc write_int16ex*(process: Processt; address: uintptrt; value: int16):bool  {.exportpy.}  =
+  ## # Description
+  ## Writes a signed 16-bit integer to a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the signed 16-bit integer will be written to.
+  ##  - `address`: The memory address where the signed 16-bit integer will be written.
+  ##  - `value`: The signed 16-bit integer value that will be written to the memory address.
+  writememoryex(process, address, value)
+
+proc write_int32ex*(process: Processt; address: uintptrt; value: int32):bool  {.exportpy.}  =
+  ## # Description
+  ## Writes a signed 32-bit integer to a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the signed 32-bit integer will be written to.
+  ##  - `address`: The memory address where the signed 32-bit integer will be written.
+  ##  - `value`: The signed 32-bit integer value that will be written to the memory address.
+  writememoryex(process, address, value)
+
+proc write_int64ex*(process: Processt; address: uintptrt; value: int64):bool  {.exportpy.}  =
+  ## # Description
+  ## Writes a signed 64-bit integer to a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the signed 64-bit integer will be written to.
+  ##  - `address`: The memory address where the signed 64-bit integer will be written.
+  ##  - `value`: The signed 64-bit integer value that will be written to the memory address.
+  writememoryex(process, address, value)
+
+proc write_float32ex*(process: Processt; address: uintptrt; value: float32):bool  {.exportpy.}  =
+  ## # Description
+  ## Writes a 32-bit floating-point number to a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the 32-bit floating-point number will be written to.
+  ##  - `address`: The memory address where the 32-bit floating-point number will be written.
+  ##  - `value`: The 32-bit floating-point number value that will be written to the memory address.
+  writememoryex(process, address, value)
+
+proc write_float64ex*(process: Processt; address: uintptrt; value: float64):bool  {.exportpy.}  =
+  ## # Description
+  ## Writes a 64-bit floating-point number to a specified memory address in a target process.
+  ##
+  ## # Parameters
+  ##  - `process`: A pointer to the process that the 64-bit floating-point number will be written to.
+  ##  - `address`: The memory address where the 64-bit floating-point number will be written.
+  ##  - `value`: The 64-bit floating-point number value that will be written to the memory address.
+  writememoryex(process, address, value)
 
 proc originalAllocmemory(size: csize_t; prot: uint32): uintptrt {.cdecl, importc: "LM_AllocMemory".}
 proc Allocmemory*(size: csize_t; prot: uint32): uintptrt {.exportpy.}  = 
@@ -606,6 +1098,25 @@ proc Deeppointerex*(process: Processt; base: uintptrt; offsets: seq[uintptrt]): 
   ## base address and dereferencing accordingly.
   return originalDeeppointerex(process.addr, base, cast[ptr uintptrt](addr offsets[0]), offsets.len.csize_t)
 
+proc pointerchain64*(process: Processt, base: uintptrt, offsets: openArray[SomeInteger]): uint64  =
+  ## # Description
+  ## This is a pure Nim integration of the DeepPointerEx function. I just like it more this way.
+  ##
+  ## # Parameters
+  ##  - `process`: The process that the deep pointer will be calculated from.
+  ##  - `base`: The starting address from which to calculate the deep pointer.
+  ##  - `offsets`: A sequence[array like] of offsets used to navigate through the memory addresses.
+  ##
+  ## # Return Value
+  ## The function returns a deep pointer calculated based on the provided
+  ## base address, offsets, and number of offsets. The function iterates through
+  ## the offsets, adjusting the base address and dereferencing accordingly.
+  ##
+  ## Example: Pointerchain64(notepadprocess, (notepadmodule.base + 0x000320D8.uint64), @[0x40.uint64, 0x38.uint64, 0x30.uint64, 0x50.uint64])
+  result = readmemoryex(process.addr, base, uint64)
+  for offset in offsets[0..^2]:
+    result = readmemoryex(process.addr, result + offset, uint64)
+  result = result + offsets[^1].uint64
 
 proc originalDatascan(data: ptr uint8; datasize: csize_t; address: uintptrt; scansize: csize_t): uintptrt {.cdecl, importc: "LM_DataScan".}
 proc Datascan*(data: seq[byte]; address: uintptrt, scansize: csize_t): uintptrt {.exportpy.}  =
@@ -795,7 +1306,7 @@ proc Freepayload*(payload: seq[byte]): void {.exportpy.}  =
 proc originalDisassemble(machinecode: uintptrt; instructionout: ptr Instructiont): boolt {. cdecl, importc: "LM_Disassemble".}
 proc Disassemble*(machinecode: openArray[byte]): Instructiont =
   ## # Description
-  ## The function disassembles one instruction into an `inst_t` struct.
+  ## The function disassembles one instruction into an `Instructiont` struct.
   ##
   ## # Parameters
   ##  - `machine_code`: The address of the instruction to be disassembled.
@@ -808,7 +1319,7 @@ proc Disassemble*(machinecode: openArray[byte]): Instructiont =
 proc originalDisassembleex(machinecode: uintptrt; arch: uint32; bits: csize_t; maxsize: csize_t; instructioncount: csize_t; runtimeaddress: uintptrt; instructionsout: ptr ptr Instructiont): csize_t {.cdecl, importc: "LM_DisassembleEx".}
 proc Disassembleex*(machine_code: openArray[byte], address: uintptrt, maxsize:  csize_t=16,  arch: uint32 = Archx86, bits: csize_t= 64.csize_t,): ptr Instructiont =
   ## # Description
-  ## The function disassembles instructions into an array of `inst_t` structs.
+  ## The function disassembles instructions into an array of `Instructiont` structs.
   ##
   ## # Parameters
   ##  - `machine_code`: The address of the instructions to be disassembled.

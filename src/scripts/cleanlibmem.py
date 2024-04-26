@@ -46,9 +46,11 @@ def resup(data):
     data = re.sub(r"(\w+)\s+(\S+)", "\\g<1> \\g<2>", data)
     data = re.sub(r"(\n)+", "\n", data)
     data = re.sub(r"\s\s+", " ", data)
+    data = data.replace("const", "")
     data = data.replace("uint64_t start_time; char path[4096];", "uint64_t start_time;\nchar path[4096];")
     data = data.replace("#include <stdlib.h>\n#include <stdint.h>", "")
     data = "#include <stdlib.h>\n#include <stdint.h>\ntypedef int bool;\n" + data
+
 
     return data
 

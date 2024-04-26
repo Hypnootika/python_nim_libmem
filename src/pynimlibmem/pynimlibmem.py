@@ -1,4 +1,5 @@
 import pynimlibmem as libmem
+from ctypes import *
 
 PROTNONE = 0
 PROTR = 1
@@ -334,7 +335,9 @@ def find_segment(address: int) -> Segment:
     return Segment(libmem.find_segment(address))
 
 
-# Checked. But doesn't work. ### Nope, still doesn't work.
+# Checked.
+# Works
+# print(find_segmentex(libmem.get_process(), find_moduleex(libmem.get_process(), "ntdll.dll").base + 0x1000))
 def find_segmentex(process: Process, address: int) -> Segment:
     return Segment(libmem.find_segmentex(process, address))
 
@@ -351,11 +354,17 @@ def set_memoryex(process: Process, dest: int, byte: bytes, size: int) -> int:
 
 
 # Checked.
+# p = get_process()
+# m = find_module("python.exe")
+# print(prot_memory(m.base + 10, 20, PROTRW))
 def prot_memory(address: int, size: int, prot: int) -> bool:
     return libmem.prot_memory(address, size, prot)
 
 
-# Not checked.
+# always false
+# p = get_processex(1152)
+# m = find_moduleex(p, "ntdll.dll")
+# print(prot_memoryex(p, m.base, 20, PROTXR))
 def prot_memoryex(process: Process, address: int, size: int, prot: int) -> bool:
     return libmem.prot_memoryex(process, address, size, prot)
 
@@ -569,24 +578,10 @@ def alloc_memoryex(process: Process, size: int, prot: int) -> int:
     return libmem.alloc_memoryex(process, size, prot)
 
 
-# Ignored
-def free_memory(alloc: int, size: int) -> bool:
-    return libmem.free_memory(alloc, size)
-
-
-# Ignored
-def free_memoryex(process: Process, alloc: int, size: int) -> bool:
-    return libmem.free_memoryex(process, alloc, size)
-
-
-# Later
+# Works
+# print(hex(deep_pointer(find_module("ntdll.dll").base, [0x00, 0x00])))
 def deep_pointer(base: int, offsets: list[int]) -> int:
     return libmem.deep_pointer(base, offsets)
-
-
-# Later
-def deep_pointerex(process: Process, base: int, offsets: list[int]) -> int:
-    return libmem.deep_pointerex(process, base, offsets)
 
 
 # Known to work.
@@ -594,47 +589,20 @@ def pointer_chain_64(process: Process, base: int, offsets: list[bytes]) -> int:
     return libmem.pointer_chain_64(process, base, offsets)
 
 
-# later
-def data_scan(data: list[bytes], address: int, scansize: int) -> int:
-    return libmem.data_scan(data, address, scansize)
-
-
-# later
-def data_scanex(process: Process, data: list[bytes], address: int, scansize: int) -> int:
-    return libmem.data_scanex(process, data, address, scansize)
-
-
-# later
+# Works
+# print(hex(pattern_scan([0x48, 0x8b, 0x05, 0x00, 0x00, 0x00, 0x00], "xxx?????", m.base, m.size)))
 def pattern_scan(pattern: list[bytes], mask: str, address: int, scansize: int) -> int:
     return libmem.pattern_scan(pattern, mask, address, scansize)
 
 
-# later
-def pattern_scanex(process: Process, pattern: list[bytes], mask: str, address: int, scansize: int) -> int:
-    return libmem.pattern_scanex(process, pattern, mask, address, scansize)
-
-
-# later
+# Works
+# p = libmem.get_process()
+# m = libmem.find_module("ntdll.dll")
+# print(hex(libmem.sig_scan("48 8B 05 ? ? ? ? 48 8B 0C C8", m["base"], m["size"])))
 def sig_scan(signature: str, address: int, scansize: int) -> int:
     return libmem.sig_scan(signature, address, scansize)
 
 
-# later
-def sig_scanex(process: Process, signature: str, address: int, scansize: int) -> int:
-    return libmem.sig_scanex(process, signature, address, scansize)
-
-
-# Checked.
-# def get_architecture() -> int:
-#     return libmem.get_architecture()
-
-
-# always 0xffffffffffffffff ### Still always 0xffffffffffffffff
-def find_symbol_address(module: Module, symbolname: str) -> int:
-    return libmem.find_symbol_address(module, symbolname)
-
-
-# Checked. But doesn't work.
 # Works:
 # print(libmem.assemble("mov eax, 0x1234"))
 # print(assemble("mov eax, 0x1234"))
@@ -642,24 +610,42 @@ def assemble(code: str) -> Instruction:
     return Instruction(libmem.assemble(code))
 
 
-# Checked. But doesn't work. ### Semms to work now.
+# returns 5?
+# print(assembleex("mov eax, 0x1234", 0))
 def assembleex(code: str, runtimeaddress: int, arch: int = 3, bits: int = 64) -> int:
     return libmem.assembleex(code, runtimeaddress, arch, bits)
 
 
-# Ignored
-def free_payload(payload: list[bytes]):
-    return libmem.free_payload(payload)
-
-
-# later
+# Works
+# print(assemble("mov eax, 0x1234").bytes)
 def disassemble(machinecode: list[bytes]) -> Instruction:
     return Instruction(libmem.disassemble(machinecode))
 
 
-# Ignored
-def free_instructions(instructions: list[Instruction]):
-    return [Instruction(instruction) for instruction in libmem.free_instructions(instructions)]
+# Works
+# print(hook_code(find_module("ntdll.dll").base + 0x1000, find_module("ntdll.dll").base + 0x1026))
+def hook_code(fromarg: int, to: int) -> tuple[int, int]:
+    return libmem.hook_code(fromarg, to)
+
+
+# Works
+# p = find_process("explorer.exe")
+# m = libmem.find_moduleex(p, "ntdll.dll")["base"]
+# print(hook_code_ex(libmem.get_process(), m + 0x500, m + 0x52964))
+def hook_code_ex(process: Process, fromarg: int, to: int) -> tuple[int, int]:
+    return libmem.hook_code_ex(process, fromarg, to)
+
+
+# Works
+# print(unhook_code(find_module("ntdll.dll").base + 0x1000, find_module("ntdll.dll").base + 0x1026, 8))
+def unhook_code(fromarg: int, trampoline: int, size: int) -> bool:
+    return libmem.unhook_code(fromarg, trampoline, size)
+
+
+# Works
+# print(unhook_code_ex(libmem.get_process(), m + 0x500, m + 0x52964, 8))
+def unhook_code_ex(process: Process, fromarg: int, trampoline: int, size: int) -> bool:
+    return libmem.unhook_code_ex(process, fromarg, trampoline, size)
 
 
 # Ignored
@@ -672,21 +658,70 @@ def code_lengthex(process: Process, machinecode: int, minlength: int) -> int:
     return libmem.code_lengthex(process, machinecode, minlength)
 
 
-# later
-def hook_code(fromarg: int, to: int) -> tuple[int, int]:
-    return libmem.hook_code(fromarg, to)
+def free_payload(payload: list[bytes]):
+    return libmem.free_payload(payload)
 
 
-# later
-def hook_codeex(process: Process, fromarg: int, to: int) -> tuple[int, int]:
-    return libmem.hook_codeex(process, fromarg, to)
+# Ignored
+def free_instructions(instructions: list[Instruction]):
+    return [Instruction(instruction) for instruction in libmem.free_instructions(instructions)]
 
 
-# later
-def unhook_code(fromarg: int, trampoline: int, size: int) -> bool:
-    return libmem.unhook_code(fromarg, trampoline, size)
+# Checked.
+# def get_architecture() -> int:
+#     return libmem.get_architecture()
 
 
-# later
-def unhook_codeex(process: Process, fromarg: int, trampoline: int, size: int) -> bool:
-    return libmem.unhook_codeex(process, fromarg, trampoline, size)
+# Ignored
+def free_memory(alloc: int, size: int) -> bool:
+    return libmem.free_memory(alloc, size)
+
+
+# Ignored
+def free_memoryex(process: Process, alloc: int, size: int) -> bool:
+    return libmem.free_memoryex(process, alloc, size)
+
+
+# Some day
+def data_scan(data: list[bytes], address: int, scansize: int) -> int:
+    return libmem.data_scan(data, address, scansize)
+
+
+# Dunno
+# m = find_moduleex(find_process("notepad.exe"), "notepad.exe")
+# p = find_process("notepad.exe")
+# print(hex(data_scan_ex(p, [0x48, 0x8b, 0x05, 0x00, 0x00, 0x00, 0x00], m.base, m.size)))
+def data_scan_ex(process: Process, data: list[bytes], address: int, scansize: int) -> int:
+    return libmem.data_scan_ex(process, data, address, scansize)
+
+
+# Doesnt.
+# pat = [0x48, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x1f, 0x00, 0x00, 0x00, 0xe9, 0x00, 0x00, 0x00, 0x00, 0x33, 0xc9]
+# mask = "xx?????xxxxxx????xx"
+# p = find_process("notepad.exe")
+# m = find_moduleex(p, "notepad.exe").base
+# mm = find_moduleex(p, "notepad.exe").size
+# print(hex(pattern_scan_ex(p,pat, mask, m, mm)))
+def pattern_scan_ex(process: Process, pattern: list[bytes], mask: str, address: int, scansize: int) -> int:
+    return libmem.pattern_scan_ex(process, pattern, mask, address, scansize)
+
+
+# I guess its just a matter of the signature.
+# But for me its always 0xffffffffffffffff
+# p = find_process("notepad.exe")
+# m = libmem.find_moduleex(p, "notepad.exe")["base"]
+# mm = libmem.find_moduleex(p, "notepad.exe")["size"]
+# print(hex(sig_scan_ex(p, "e8 ? ? ? ? 85 ff 74 ? 48 8b", m, mm)))
+def sig_scan_ex(process: Process, signature: str, address: int, scansize: int) -> int:
+    return libmem.sig_scan_ex(process, signature, address, scansize)
+
+
+# always 0xffffffffffffffff ### Still always 0xffffffffffffffff
+def find_symbol_address(module: Module, symbolname: str) -> int:
+    return libmem.find_symbol_address(module, symbolname)
+
+
+# no clue
+# print(deep_pointer_ex(libmem.get_process(), find_moduleex(libmem.get_process(), "ntdll.dll").base, [0x48, 0x8b, 0x05, 0x00, 0x00, 0x00, 0x00]))
+def deep_pointer_ex(process: Process, base: int, offsets: list[int]) -> int:
+    return libmem.deep_pointer_ex(process, base, offsets)

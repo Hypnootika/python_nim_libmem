@@ -1,4 +1,4 @@
-import typetraits, strutils, os, nimpy, sequtils
+import typetraits, os, nimpy
 
 pyExportModule("pynimlibmem")
 
@@ -73,10 +73,10 @@ type
   Vmtt* = structvmtt
 
 converter stringtToCstring*(x: cstr): cstring  {.used, inline.} = cast[cstring]((distinctBase(cstr)x)[0].addr)
-converter charArrayToCstring*(x: array[4096, char]): cstring {.used, inline.} = cast[cstring]((distinctBase(array[4096, char])x)[0].addr)
+converter charArrayToCstring*(x: array[4096, char]): cstring {.used, inline.} = cast[cstring](x[0].addr)
 converter cstringToStringt*(x: cstring): cstr {.used, inline.} = cast[cstr]($x)
-converter charArrayToCstring*(x: array[32, char]): cstring {.used, inline.} = cast[cstring]((distinctBase(array[32, char])x)[0].addr)
-converter charArrayToCstring*(x: array[160, char]): cstring {.used, inline.} = cast[cstring]((distinctBase(array[160, char])x)[0].addr)
+converter charArrayToCstring*(x: array[32, char]): cstring {.used, inline.} = cast[cstring](x[0].addr)
+converter charArrayToCstring*(x: array[160, char]): cstring {.used, inline.} = cast[cstring](x[0].addr)
 
 
 

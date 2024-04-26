@@ -1,7 +1,7 @@
 when defined(windows):
   withDir(thisDir()):
     const p = thisDir() & r"\..\src\lib\libmem.lib"
-    switch("app", "console")
+
     switch("cc", "vcc")
     switch("define", "debug")
     switch("threads", "off")

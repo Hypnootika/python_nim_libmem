@@ -29,12 +29,12 @@ def from_char_array_tostr(c_array) -> str:
 
 class Process:
     def __init__(self, process):
-        self._pid = process["pid"]
+        self._name = from_char_array_tostr(process["name"])
+        self._path = from_char_array_tostr(process["path"])
         self._ppid = process["ppid"]
+        self._pid = process["pid"]
         self._bits = process["bits"]
         self._start_time = process["starttime"]
-        self._path = from_char_array_tostr(process["path"])
-        self._name = from_char_array_tostr(process["name"])
 
     def __repr__(self):
         return (f"Name: {self._name}\n"
@@ -166,9 +166,10 @@ class Instruction:
     def __repr__(self):
         return (f"Address: {self.address}\n"
                 f"Size: {self.size}\n"
+                f"Bytes: {self.bytes}\n"
                 f"Mnemonic: {self.mnemonic}\n"
                 f"op_str: {self.op_str}\n"
-                f"Bytes: {self.bytes}")
+                )
 
     @property
     def address(self):
@@ -251,7 +252,7 @@ def enum_threads() -> list[Thread]:
 
 # Checked. But doesn't work.
 def enum_threadsex(process: Process) -> list[Thread]:
-    return [Thread(thread) for thread in libmem.enum_threadsex(process)]
+    return libmem.enum_threadsex(process)
 
 
 # Checked.
@@ -259,12 +260,14 @@ def get_thread() -> Thread:
     return Thread(libmem.get_thread())
 
 
-# Checked. But doesn't work.
+# Checked. But doesn't work. ### WORKS WITHOUT WRAPPING IT INTO A CLASS ->
+# get_threadex(libmem.get_process())
 def get_threadex(process: Process) -> Thread:
     return Thread(libmem.get_threadex(process))
 
 
-# Checked. But doesn't work.
+# Checked. But doesn't work. #### WORKS WITHOUT WRAPPING IT INTO A CLASS ->
+# get_thread_process(libmem.get_threadex(libmem.get_process()))
 def get_thread_process(thread: Thread) -> Process:
     return Process(libmem.get_thread_process(thread))
 
@@ -294,22 +297,23 @@ def load_module(path: str) -> bool:
     return libmem.load_module(path)
 
 
-# Checked. But doesn't work.
+# Checked. But doesn't work. ### WORKS WITHOUT WRAPPING IT INTO A CLASS ->
+# load_moduleex(libmem.get_process(), "C:\\Windows\\System32\\ntdll.dll"))
 def load_moduleex(process: Process, path: str) -> bool:
     return libmem.load_moduleex(process, path)
 
 
-# Checked. But doesn't work.
+# Checked. But doesn't work. ### Still doesnt even without wrapping it into a class.
 def unload_module(module: Module) -> bool:
     return libmem.unload_module(module)
 
 
-# Checked. But doesn't work.
+# Checked. But doesn't work. ### Still doesnt even without wrapping it into a class.
 def unload_moduleex(process: Process, module: Module) -> bool:
     return libmem.unload_moduleex(process, module)
 
 
-# Checked. But doesn't work.
+# Checked. But doesn't work. ### Still doesnt even without wrapping it into a class.
 def enum_symbols(module: Module) -> list[Symbol]:
     return [Symbol(symbol) for symbol in libmem.enum_symbols(module)]
 
@@ -319,7 +323,8 @@ def enum_segments() -> list[Segment]:
     return [Segment(segment) for segment in libmem.enum_segments()]
 
 
-# Checked. But doesn't work.
+# Checked. But doesn't work. ### WORKS WITHOUT WRAPPING IT INTO A CLASS ->
+# enum_segmentsex(libmem.get_process())
 def enum_segmentsex(process: Process) -> list[Segment]:
     return [Segment(segment) for segment in libmem.enum_segmentsex(process)]
 
@@ -329,17 +334,18 @@ def find_segment(address: int) -> Segment:
     return Segment(libmem.find_segment(address))
 
 
-# Checked. But doesn't work.
+# Checked. But doesn't work. ### Nope, still doesn't work.
 def find_segmentex(process: Process, address: int) -> Segment:
     return Segment(libmem.find_segmentex(process, address))
 
 
-# Checked. But doesn't work. Throws SIGSEGV.
+# Checked. But doesn't work. Throws SIGSEGV. ### Still big nope.
 def set_memory(dest: int, byte: bytes, size: int) -> int:
     return libmem.set_memory(dest, byte, size)
 
 
-# Doesnt throw SIGSEGV but doesn't work either.
+# Works.
+# print(set_memoryex(libmem.get_process(), find_moduleex(libmem.get_process(), "ntdll.dll").base + 0x1000, 0x90, 8))
 def set_memoryex(process: Process, dest: int, byte: bytes, size: int) -> int:
     return libmem.set_memoryex(process, dest, byte, size)
 
@@ -623,17 +629,20 @@ def sig_scanex(process: Process, signature: str, address: int, scansize: int) ->
 #     return libmem.get_architecture()
 
 
-# always 0xffffffffffffffff
+# always 0xffffffffffffffff ### Still always 0xffffffffffffffff
 def find_symbol_address(module: Module, symbolname: str) -> int:
     return libmem.find_symbol_address(module, symbolname)
 
 
 # Checked. But doesn't work.
+# Works:
+# print(libmem.assemble("mov eax, 0x1234"))
+# print(assemble("mov eax, 0x1234"))
 def assemble(code: str) -> Instruction:
     return Instruction(libmem.assemble(code))
 
 
-# Checked. But doesn't work.
+# Checked. But doesn't work. ### Semms to work now.
 def assembleex(code: str, runtimeaddress: int, arch: int = 3, bits: int = 64) -> int:
     return libmem.assembleex(code, runtimeaddress, arch, bits)
 

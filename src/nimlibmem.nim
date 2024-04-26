@@ -306,7 +306,7 @@ proc findModuleex*(process: Processt; name: string): Modulet {.exportpy: "find_m
   ## A `Modulet` structure containing information about the found module.
   discard originalFindmoduleex(process.addr, name, result.addr)
 
-template currentmodulebase*(): uintptrt = Findmodule($charArrayToCstring(Getprocess().name)).base
+template currentmodulebase*(): uintptrt = findmodule($charArrayToCstring(getprocess().name)).base
 
 proc originalLoadmodule(path: cstring; moduleout: ptr Modulet): boolt {.cdecl, importc: "LM_LoadModule".}
 proc loadModule*(path: string): bool {.exportpy: "load_module".}  =
